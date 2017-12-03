@@ -1,6 +1,9 @@
-import Login from './login'
-import getUser from './login'
+import login from './login'
+import query from './query'
+import getCurrentUser from './getCurrentUser'
 
 export default {
-    Login
+    login,
+    query,
+    getCurrentUser
 }

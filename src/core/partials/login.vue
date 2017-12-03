@@ -1,7 +1,7 @@
 <template>
   <div class="container">
       <div class="login-container" v-loading="loading" element-loading-text="正在登录中...">
-          <img src="../assets/logo.png">
+          <img src="../../assets/logo.png">
           <div class="login-box-wrapper">
                <h2>同方工业运维平台</h2>
                 <el-form :model="form" ref="form" :rules="formRule" label-position="left" class="login-box">
@@ -10,8 +10,8 @@
                         </el-input>
                     </el-form-item>
 
-                    <el-form-item label="密码" prop="pwd">
-                        <el-input type="password" size="small" v-model="form.pwd" auto-complete="off" style="color:#FFF;" placeholder="密码">
+                    <el-form-item label="密码" prop="password">
+                        <el-input type="password" size="small" v-model="form.password" auto-complete="off" style="color:#FFF;" placeholder="密码">
                         </el-input>
                     </el-form-item>
 
@@ -28,7 +28,17 @@
 </template>
 
 <script>
-import login from "../api/user/login";
+import User from "../../api/user";
+import tenant from "../../conf/tenant";
+import auth from "../../auth";
+
+function getTenantInfo(tenants, code) {
+  let i = 0;
+  while (tenants[i] && tenants[i].tenantCode != code) {
+    i++;
+  }
+  return tenants[i];
+}
 
 export default {
   name: "login",
@@ -36,8 +46,8 @@ export default {
     return {
       loading: false,
       form: {
-        account: "",
-        pwd: ""
+        account: auth.getAccount() || "",
+        password: ""
       },
       formRule: {
         account: [
@@ -47,7 +57,7 @@ export default {
             trigger: "blur"
           }
         ],
-        pwd: [
+        password: [
           {
             required: true,
             message: "请输入密码",
@@ -63,13 +73,64 @@ export default {
       this.$refs.form.validate(async valid => {
         if (valid) {
           this.loading = true;
-          var res = await login(this.form);
-          this.loading = false;
-          console.log(res);
+          let res = await User.login(this.form);
+          res = res.data;
+
+          if (res.success && res.object) {
+            let data = res.object,
+              tenants = data.list,
+              code = tenant.getCurrentCode(),
+              tenantInfo = getTenantInfo(tenants, code);
+            if (tenantInfo) {
+              this.checked
+                ? auth.setAccount(this.form.account)
+                : auth.removeAccount();
+
+              let sessions = {};
+
+              for (let i in tenants) {
+                sessions[tenants[i].tenantCode] = tenants[i].sessionId;
+              }
+              auth.loggedIn(sessions, data.userId);
+
+              const userInfo = await User.getCurrentUser({
+                "method.optimize.includeField.fieldName": ["_id", "playRole"]
+              });
+              this.loading = false;
+              if (userInfo) {
+                let mainCode = tenant.getMainCode()
+
+                if (userInfo.isBureauer && auth.getSessionId(mainCode)) {
+                  let mainHref =  window.location.origin.replace(new RegExp(code, "i"), mainCode.toLocaleLowerCase())
+                  window.location.href = mainHref + "/bureau";
+                } else {
+                  this.$router.push({
+                    path: "/"
+                  });
+                }
+              } else {
+                this.$message({
+                  message: "查询用户信息失败！",
+                  type: "warning"
+                });
+              }
+            } else {
+              this.loading = false;
+              this.$message({
+                message: "该用户不属于租户为" + code + "的车站！",
+                type: "warning"
+              });
+            }
+          } else {
+            this.loading = false;
+            this.$message({
+              message: res.message,
+              type: "warning"
+            });
+          }
         }
       });
-    },
-    getTenant(tenants, code) {}
+    }
   }
 };
 </script>
@@ -94,7 +155,7 @@ export default {
     }
 
     .login-box-wrapper {
-      background-image: url("../assets/bg.png");
+      background-image: url("../../assets/bg.png");
       padding: 10px 0;
       margin: 10px 0;
 
