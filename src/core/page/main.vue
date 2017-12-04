@@ -53,9 +53,10 @@
       </header>
 
       <div class="content">
-        <router-view/>
+         <transition>
+            <router-view/>
+         </transition>
       </div>
-      
   </div>
 </template>
 
@@ -131,5 +132,9 @@ header.header {
     height: inherit;
     background: green;
   }
+}
+
+.content{
+  padding: 10px 30px;
 }
 </style>

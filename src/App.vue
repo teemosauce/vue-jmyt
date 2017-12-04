@@ -1,6 +1,8 @@
 <template>
   <div id="app" class="app-container">
-    <router-view/>
+    <transition>
+        <router-view/>
+    </transition>
   </div>
 </template>
 
