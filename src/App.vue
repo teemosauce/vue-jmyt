@@ -17,7 +17,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body{
+body {
   min-width: 1250px;
   min-height: 600px;
 }

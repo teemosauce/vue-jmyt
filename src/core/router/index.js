@@ -12,30 +12,26 @@ Vue.use(Router)
 
 var router = new Router({
   mode: 'history',
-  routes: [
-    {
+  routes: [{
+    path: '/',
+    component: Main,
+    meta: {
+      requiresAuth: true
+    },
+    children: [{
       path: '/',
-      component: Main,
-      meta: {
-        requiresAuth: true
-      },
-      children: [
-        {
-          path: '/',
-          name: 'home',
-          component: Home
-        }
-      ]
-    }, {
-      path: '/login',
-      name: 'login',
-      component: Login
-    }, {
-      path: '/error',
-      name: 'error',
-      component: Err
-    }
-  ]
+      name: 'home',
+      component: Home
+    }]
+  }, {
+    path: '/login',
+    name: 'login',
+    component: Login
+  }, {
+    path: '/error',
+    name: 'error',
+    component: Err
+  }]
 })
 
 router.beforeEach((to, from, next) => {
@@ -56,7 +52,9 @@ router.beforeEach((to, from, next) => {
       next() // 确保一定要调用 next()
     }
   } else {
-    next({path: '/error'})
+    next({
+      path: '/error'
+    })
   }
 })
 
